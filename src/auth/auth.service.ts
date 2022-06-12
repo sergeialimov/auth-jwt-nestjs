@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { sign } from 'jsonwebtoken';
+import { sign, verify } from 'jsonwebtoken';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import RefreshToken from './entities/refresh-token.entity';
 
 @Injectable()
 export class AuthService {
-  private RefreshTokens: RefreshToken[] = [];
+  private refreshTokens: RefreshToken[] = [];
 
   constructor(private readonly userService: UserService) {
     this.userService = userService();
@@ -73,5 +73,22 @@ export class AuthService {
     }
     // to be implemented
     return this.newRefreshAccessToken(user, values);
+  }
+
+  async retrieveRefreshToken(
+    refreshStr: string,
+  ): Promise<RefreshToken | undefined> {
+    try {
+      const decoded = verify(refreshStr, process.env.REFRESH_SECRET);
+      if (typeof decoded === string) {
+        return undefined;
+      }
+
+      return Promise.resolve(
+        this.refreshTokens.find((token) => token.id === decoded.id),
+      );
+    } catch (err) {
+      return undefined;
+    }
   }
 }
