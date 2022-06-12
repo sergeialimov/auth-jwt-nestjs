@@ -91,4 +91,15 @@ export class AuthService {
       return undefined;
     }
   }
+
+  async logout(refreshStr: string): Promise<void> {
+    const refreshToken = await this.retrieveRefreshToken(refreshStr);
+
+    if (!refreshToken) {
+      return;
+    }
+
+    // delete refreshToken from db
+    this.refreshTokens.filter((token) => refreshToken.id !== token.id);
+  }
 }
