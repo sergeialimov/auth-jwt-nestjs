@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { sign } from 'crypto';
+import { sign } from 'jsonwebtoken';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import RefreshToken from './entities/refresh-token.entity';
@@ -36,6 +36,27 @@ export class AuthService {
         expiresIn: '1h',
       }),
     };
+  }
+
+  async refresh(refreshStr: string): Promise<string | undefined> {
+    // todo: create this function
+    const refreshToken = await this.retrieveRefreshToken(refreshStr);
+
+    if (!refreshToken) {
+      return undefined;
+    }
+
+    const user = await this.userService.findOne(refreshToken.userId);
+
+    if (!user) {
+      return undefined;
+    }
+
+    const accessToken = {
+      userdId: refreshToken.userId,
+    };
+
+    return sign(accessToken, process.env.ACCESS_SECRET, { expires: '1h' });
   }
 
   async login(
