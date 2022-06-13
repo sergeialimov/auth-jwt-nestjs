@@ -1,16 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { sign, verify } from 'jsonwebtoken';
-import { User } from 'src/user/entities/user.entity';
-import { UserService } from 'src/user/user.service';
+import { User } from '../users/entities/users.entity';
+import { UserService } from '../users/users.service';
 import RefreshToken from './entities/refresh-token.entity';
 
 @Injectable()
 export class AuthService {
   private refreshTokens: RefreshToken[] = [];
 
-  constructor(private readonly userService: UserService) {
-    this.userService = userService();
-  }
+  constructor(private readonly userService: UserService) {}
 
   private async newRefreshAndAccessToken(
     user: User,
@@ -21,9 +19,9 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const refreshObject = new RefreshToken({
       id:
-        this.refreshToken.length === 0
+        this.refreshTokens.length === 0
           ? 0
-          : this.refreshTokens[this.refreshTokens.lengh - 1].id + 1,
+          : this.refreshTokens[this.refreshTokens.length - 1].id + 1,
       ...values,
       userId: user.id,
     });
@@ -32,7 +30,7 @@ export class AuthService {
 
     return {
       refreshToken: refreshObject.sign(),
-      accesToken: sign({ userId: user.id }, process.env.ACCESS_SECRET, {
+      accessToken: sign({ userId: user.id }, process.env.ACCESS_SECRET, {
         expiresIn: '1h',
       }),
     };
@@ -64,15 +62,15 @@ export class AuthService {
     password: string,
     values: { userAgent: string; ipAddress: string },
   ): Promise<{ accessToken: string; refreshToken: string } | undefined> {
-    const user = await this.UserService.findByEmail(email);
+    const user = await this.userService.findByEmail(email);
     if (!user) {
       return undefined;
     }
     if (user.password !== password) {
       return undefined;
     }
-    // to be implemented
-    return this.newRefreshAccessToken(user, values);
+
+    return this.newRefreshAndAccessToken(user, values);
   }
 
   async retrieveRefreshToken(
@@ -80,7 +78,7 @@ export class AuthService {
   ): Promise<RefreshToken | undefined> {
     try {
       const decoded = verify(refreshStr, process.env.REFRESH_SECRET);
-      if (typeof decoded === string) {
+      if (typeof decoded === 'string') {
         return undefined;
       }
 

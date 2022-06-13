@@ -1,4 +1,4 @@
-import { Injectable, AuthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JsonWebTokenError } from 'jsonwebtoken';
 
@@ -6,9 +6,8 @@ import { JsonWebTokenError } from 'jsonwebtoken';
 export class JwtAuthGuard extends AuthGuard('jwt') {
   handleRequest(err: any, user: any, context: any, info: any, status: any) {
     if (info instanceof JsonWebTokenError) {
-      throw new AuthorizedException('Invalid JWT');
+      throw new UnauthorizedException('Invalid JWT');
     }
+    return super.handleRequest(err, user, info, context, status);
   }
-
-  return super.handleRequest(err, user, info, context, status); 
 }
